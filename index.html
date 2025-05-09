@@ -2,21 +2,271 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ALAPS Collab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ALAPS - African Music Journey</title>
+
+  <!-- Embedded CSS -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5e1c1;
+      background-image: url('images/african_background_texture.jpg'); /* optional */
+      background-size: cover;
+      background-position: center;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .centered-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    header {
+      background-color: #d45d5d;
+      color: #fff;
+      text-align: center;
+      padding: 50px 30px;
+      border-radius: 15px;
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.15);
+      width: 100%;
+    }
+
+    .main-title {
+      font-size: 3.5rem;
+      font-weight: bold;
+      font-family: 'Georgia', serif;
+      text-transform: uppercase;
+      text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .subtitle {
+      font-size: 1.25rem;
+      font-style: italic;
+      margin-top: 10px;
+    }
+
+    .auth-section {
+      width: 100%;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .auth-form input {
+      padding: 12px;
+      font-size: 1rem;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .auth-form button {
+      background-color: #6b2d15;
+      color: #fff;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .auth-form button:hover {
+      background-color: #4a1f0d;
+      transform: scale(1.03);
+    }
+
+    .story {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      text-align: center;
+    }
+
+    #questionContainer {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    #score {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    #nextButton {
+      background-color: #6b2d15;
+      color: #fff;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: 0.3s ease;
+    }
+
+    #nextButton:hover {
+      background-color: #4a1f0d;
+      transform: scale(1.03);
+    }
+
+    @media (max-width: 600px) {
+      .main-title {
+        font-size: 2.5rem;
+      }
+
+      .centered-container {
+        padding: 0 15px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Collaborative Music Hub</h1>
+  <div class="centered-container">
+    <header>
+      <h1 class="main-title">ALAPS</h1>
+      <p class="subtitle">African Hip-Hop, Rap & Reggae Journey</p>
+    </header>
 
-  <form id="uploadForm">
-    <input type="file" name="song" accept="audio/*" required />
-    <button type="submit">Upload</button>
-  </form>
+    <div class="auth-section" id="authContainer">
+      <form id="loginForm" class="auth-form">
+        <h3>Enter as Guest</h3>
+        <input type="text" name="username" placeholder="Your Name" required />
+        <button type="submit">Continue</button>
+      </form>
+    </div>
 
-  <ul id="songList"></ul>
-  <audio id="audioPlayer" controls></audio>
+    <section class="story" id="storySection" style="display: none;">
+      <h2 id="storyTitle">Your African Music Quiz Begins!</h2>
+      <div id="questionContainer"></div>
+      <p id="score">Score: 0</p>
+      <button id="nextButton" onclick="nextQuestion()">Next</button>
+    </section>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="client.js"></script>
+    <section class="story" id="musicHub" style="display: none;">
+      <h2>ALAPS Music Hub</h2>
+      <p>Play songs from your device!</p>
+      <form id="uploadForm">
+        <input type="file" name="song" accept="audio/*" required />
+        <button type="submit">Load Song</button>
+      </form>
+      <audio id="audio-player" controls></audio>
+      <ul id="song-list"></ul>
+    </section>
+  </div>
+
+  <!-- Embedded JavaScript -->
+  <script>
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    const questions = [
+      { question: "Who is considered the father of Afrobeat music?", options: ["Fela Kuti", "Burna Boy", "Wizkid"], answer: "Fela Kuti" },
+      { question: "What genre of music is Bob Marley famous for?", options: ["Reggae", "Hip-Hop", "Jazz"], answer: "Reggae" },
+      { question: "Who is the African Queen of Hip-Hop?", options: ["M.I. Abaga", "Sista Afia", "Queen of the South"], answer: "M.I. Abaga" },
+      { question: "In which country was the genre 'Gqom' born?", options: ["South Africa", "Nigeria", "Kenya"], answer: "South Africa" },
+      { question: "Which Nigerian artist won the 2020 Grammy for Best Global Music Album?", options: ["Burna Boy", "Davido", "Mr Eazi"], answer: "Burna Boy" }
+    ];
+
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const username = new FormData(e.target).get("username");
+      localStorage.setItem("alaps_user", username);
+      document.getElementById("authContainer").style.display = "none";
+      document.getElementById("storySection").style.display = "block";
+      loadQuestion();
+    });
+
+    function loadQuestion() {
+      const q = questions[currentQuestionIndex];
+      const container = document.getElementById("questionContainer");
+      container.innerHTML = ` 
+        <p><strong>${q.question}</strong></p>
+        ${q.options.map(opt => `<label><input type="radio" name="answer" value="${opt}"> ${opt}</label><br>`).join('')}`;
+    }
+
+    function nextQuestion() {
+      const selected = document.querySelector('input[name="answer"]:checked');
+      if (!selected) return alert("Please choose an answer.");
+      if (selected.value === questions[currentQuestionIndex].answer) score++;
+
+      currentQuestionIndex++;
+      document.getElementById("score").innerText = `Score: ${score}`;
+
+      if (currentQuestionIndex < questions.length) {
+        loadQuestion();
+      } else {
+        document.getElementById("storySection").style.display = "none";
+        document.getElementById("musicHub").style.display = "block";
+      }
+    }
+
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const songFile = e.target.song.files[0];
+      const audioPlayer = document.getElementById("audio-player");
+
+      if (songFile) {
+        // Update localStorage to reflect the uploaded song for all users
+        localStorage.setItem("current_song", songFile.name);
+        audioPlayer.src = URL.createObjectURL(songFile);
+        
+        // Update the song list UI
+        const list = document.getElementById("song-list");
+        list.innerHTML = `<li>${songFile.name}</li>`;
+      }
+    });
+
+    // Listen for changes in the 'current_song' in localStorage (for sync across users)
+    window.addEventListener('storage', (e) => {
+      if (e.key === "current_song") {
+        const audioPlayer = document.getElementById("audio-player");
+        const songName = e.newValue;
+        if (songName) {
+          // Update audio player with the song from localStorage
+          audioPlayer.src = URL.createObjectURL(new Blob([songName]));
+          
+          // Update the song list
+          const list = document.getElementById("song-list");
+          list.innerHTML = `<li>${songName}</li>`;
+        }
+      }
+    });
+
+    // Sync the song if it's already in localStorage when a user visits the page
+    if (localStorage.getItem("current_song")) {
+      const audioPlayer = document.getElementById("audio-player");
+      const songName = localStorage.getItem("current_song");
+      audioPlayer.src = URL.createObjectURL(new Blob([songName]));
+
+      // Update the song list UI
+      const list = document.getElementById("song-list");
+      list.innerHTML = `<li>${songName}</li>`;
+    }
+  </script>
 </body>
 </html>
-
